@@ -39,10 +39,15 @@ class AuthController extends Controller
             return response()->json(['error' => 'User role not assigned'], 403);
         }
 
+        $organization = $userRole->organization;
+
+        // If parent exists use parent_id otherwise use organization id
+        $organizationId = $organization->parent_id ?? $organization->id;
+
         // Make role human friendly
         $formattedRole = ucwords(str_replace('_', ' ', $userRole->role->name));
 
-        $organizationName = $userRole->organization->name;
+        $organizationName = $organization->name;
 
         $message = "Welcome {$user->name}, you are logged in as {$formattedRole}. Redirecting you to {$organizationName}...";
 
@@ -50,11 +55,11 @@ class AuthController extends Controller
             'message' => $message,
             'access_token' => $token,
             'token_type' => 'bearer',
+            'organization_id' => $organizationId,
             'user_role' => $userRole->role->name,
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
         ]);
     }
-
     public function me()
     {
         $user = JWTAuth::user();
