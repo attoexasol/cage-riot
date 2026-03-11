@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Validator;
 use App\Helpers\ResponseHelper;
 use App\Mail\EmailOtpMail;
 use App\Models\Organization;
@@ -88,11 +89,23 @@ class AuthController extends Controller
     }
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required|string',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6',
+            ],
+            [
+                'email.unique' => 'This email is already registered.'
+            ]
+        );
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => true,
+                'message' => $validator->errors()->first()
+            ], 200);
+        }
 
         DB::beginTransaction();
 
