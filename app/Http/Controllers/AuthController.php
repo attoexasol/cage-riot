@@ -201,7 +201,7 @@ class AuthController extends Controller
             if ($user == null) {
                 return ResponseHelper::Out('failed', 'unauthorized', null, 401);
             }
-            $user->update(['otp' => 0,  'updated_by'     => $user->id,]);
+            $user->update(['otp' => null,'otp_verified' => true]);
             return ResponseHelper::Out('success', 'Otp verification successful!', $user, 200);
         } catch (ValidationException $e) {
             return ResponseHelper::Out('error', 'Validation Failed', $e->errors(), 422);
@@ -216,7 +216,9 @@ class AuthController extends Controller
                 'password' => 'required|string|min:6|confirmed',
             ]);
             $email = $request->input('email');
-            $user = User::where('email', '=', $email)->first();
+            $user = User::where('email', $request->email)
+                    ->where('otp_verified', true)
+                    ->first();
             if (!$user) {
                 if ($user == null) {
                     return ResponseHelper::Out('failed', 'unauthorized', null, 401);
@@ -225,6 +227,7 @@ class AuthController extends Controller
             //update password
             $user->update([
                 'password' => Hash::make($request->input('password')),
+                'otp_varified'=>false,
                 'updated_by'     => $user->id,
             ]);
             return ResponseHelper::Out('success', 'Password set successful!', $user, 200);
